@@ -1,19 +1,39 @@
 sudo: required
 dist: trusty
 
+addons:
+  ssh_known_hosts: 162.243.116.41
+
 language: ruby
-cache: bundler
 rvm:
-  - "2.3.1"
+- 2.3.1
+cache: bundler
 
 before_install:
-  - gem update --system
-  - gem --version
-
+- openssl aes-256-cbc -K $encrypted_e238cd8b13fd_key -iv $encrypted_e238cd8b13fd_iv -in .ci/deploy_rsa.enc -out .ci/deploy_rsa -d
+- gem update --system
+- gem install bundler
+- gem --version
+- bundle --version
 install:
-  - bundle install
-  - bundle exec jekyll build
+- bundle install
+- bundle exec jekyll build
 
 script:
-  - bundle exec htmlproofer --check-html --url-ignore /^https:\/\/github\.com\/adicu\/education\.adicu\.com\/tree\/master\/ _site/
-  - bundle exec mdl --style .ci/markdown_style.rb .
+- bundle exec htmlproofer --check-html --url-ignore /^https:\/\/github\.com\/adicu\/education\.adicu\.com\/tree\/master\/ _site/
+- bundle exec mdl --style .ci/markdown_style.rb .
+
+before_deploy:
+- eval "$(ssh-agent -s)"
+- chmod 600 $TRAVIS_BUILD_DIR/.ci/deploy_rsa
+- ssh-add $TRAVIS_BUILD_DIR/.ci/deploy_rsa
+
+- rm -rf _site/
+- bundle exec jekyll build --baseurl /beta
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/_site/ travis@162.243.116.41:/srv/learn/public_html/beta
+  on:
+    branch: master
