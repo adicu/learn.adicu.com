@@ -3,7 +3,7 @@ layout: curriculum
 title: Getting to Know R
 tagline: A tutorial for first-time R users
 author: Kristy Choi
-email: eyc2120@columbia.edu
+contact: mailto:eyc2120@columbia.edu
 ---
 
 1. TOC

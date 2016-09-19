@@ -3,7 +3,7 @@ layout: curriculum
 title: An Introduction to Python Programming
 tagline: Preparing you to byild your first web application
 author: Matt Picolella
-email: matthew@adicu.com
+contact: mailto:matthew@adicu.com
 ---
 
 1. TOC
