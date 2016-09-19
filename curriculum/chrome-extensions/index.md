@@ -8,7 +8,7 @@ author: Matt Piccolella
 contact: https://twitter.com/matthew_pic
 ---
 
-**Download the sample code [here][code-link].**
+Download the sample code [here][code-link].
 
 1. TOC
 {:toc}
@@ -124,8 +124,9 @@ that we used in our `manifest.json` file, so we're now going to create
 that script. Now our directory, which I've called
 `first-chrome-extension`, has our two files:
 
-```
-manifest.json script.js
+```bash
+├── manifest.json
+└── script.js
 ```
 
 Inside of `script.js`, put the following line:
@@ -276,6 +277,7 @@ Cage!
 ```
 
 `script.js`
+
 ```javascript
 // Links to pictures of Nicholas Cage
 var CAGE_URLS = ['http://upload.wikimedia.org/wikipedia/commons/3/33/Nicolas_Cage_2011_CC.jpg',
@@ -305,7 +307,7 @@ you'd like, and watch your browsing experience transform!
 
 ### Link Replacement
 
-[Rick-Rolling](rick-roll) is hilarious. Let's make a certain percentage
+[Rick-Rolling][rick-roll] is hilarious. Let's make a certain percentage
 of the links on every page redirect to 'Never Gonna Give You Up'.
 
 Filename: `manifest.json`
@@ -506,433 +508,6 @@ know which of the many content pages it needs to send the message to. As
 we'll see later, there are ways of finding the tab ID for the tab that
 you're interested in.
 
-## Drumpfinator
-
-If any of you are fans of "Last Week Tonight with John Oliver," you may
-have seen the episode in which he [discusses Donald Trump][john-oliver].
-In it, Oliver encourages Trump to return his name to his ancestral name,
-"Drumpf." As a part of this goal, John Oliver's team released a Chrome
-extension called
-
-"Drumpfinator," which replaces every instance of the word "Trump" with
-"Drumpf." The extension is available [here][drumpfinator].
-
-As a part of this curriculum, I thought it might be cool for us to build
-our own Drumpfinator extension, with one or two extra features.
-
-### Text Replacement
-
-First, let's start with the most basic application, one that replaces
-the words on the page with "Drumpf" instead of "Trump." To do this,
-let's first create our basic `manifest.json` file in a new directory
-called `drumpfinator`:
-
-```javascript
-{
-  "manifest_version": 2,
-  "name": "Drumpfinator",
-  "version": "1.0",
-  "description": "An extension that replaces all instances of 'Trump' with 'Drumpf'",
-  "content_scripts":
-  [
-    {
-      "matches": ["*://*/*"],
-      "js": ["script.js"],
-      "run_at": "document_end"
-    }
-  ]
-}
-```
-
-Now that we have this, copy `script.js` from our sample
-`text-replacement` code we saw earlier. Inside of it, please update
-`MATCH` and `REPLACE` to be 'Trump' and 'Drumpf'. When you're finished,
-your code should look as follows:
-
-```javascript
-var ELEMENT = 1;
-var DOCUMENT = 9;
-var DOCUMENT_FRAGMENT = 11;
-var TEXT = 3;
-
-// Enter things that you'd like to replace
-var MATCH = ['Trump'];
-var REPLACE = ['Drumpf'];
-
-walk(document.body);
-
-function walk(node) {
-    // Function from here for replacing text: http://is.gd/mwZp7E
-
-    var child, next;
-
-    switch (node.nodeType) {
-        case ELEMENT:  // Element
-        case DOCUMENT:  // Document
-        case DOCUMENT_FRAGMENT: // Document fragment
-            child = node.firstChild;
-            while (child) {
-                next = child.nextSibling;
-                walk(child);
-                child = next;
-            }
-            break;
-
-        case TEXT: // Text node
-            replaceText(node);
-            break;
-    }
-}
-
-function replaceText(textNode) {
-    var v = textNode.nodeValue;
-
-    // Go through and match/replace all the strings we've given it, using RegExp.
-    for (var i = 0; i < MATCH.length; i++) {
-        v = v.replace(new RegExp('\\b' + MATCH[i] + '\\b', 'g'), REPLACE[i]);
-    }
-
-    textNode.nodeValue = v;
-}
-```
-
-Load your new extension by pressing "Load unpacked extension" at
-`chrome://extensions` and selecting your `drumpfinator` directory. Go to
-the Wikipedia page for Donald Trump located [here][trump-wiki], and you
-should see the names have changed. Woo!
-
-### Image Replacement
-
-I've decided that my internet doesn't have enough Trump on it. So, I
-want my extension to be able to replace all the images on a page with
-images of Donald Trump. However, I don't want this for all pages, only
-for the ones that I want. I want to be able to press my icon and have
-all the images change to Donald Trump. To do this, let's use our more
-advanced techniques: background pages, browser actions, and message
-passing.
-
-First, let's set the icon of our extension. Download [this
-image][trump-image] and add it to your `drumpfinator` directory. Add
-this to your `manifest.json`:
-
-```javascript
-"browser_action": {
-  "default_icon": "trump.png"
-}
-```
-
-Now, if you reload your extension, you should the picture of The Donald
-as your extension icon.
-
-Now, let's add our background page. First, add this to your
-`manifest.json` file:
-
-```javascript
-"permissions" : ["tabs", "*://*/*"],
-"background" : {
-  "scripts" : ["background.js"],
-  "persistent" : false
-}
-```
-
-First, we request permissions, which we'll use for our background page.
-First, we'll need access to the tabs in your browser, which we'll use to
-pass messages between the background and the content. Next, we specify
-the script, which will be our background script; we choose to name it
-`background.js`. Also, importantly, we set `persistent` equal to false,
-to specify that our background page is an event page that only needs to
-be loaded in response to certain events; this is a little confusing, but
-more information is available [here][event-pages].
-
-From here, our `manifest.json` file is complete, and should look as
-follows:
-
-```javascript
-{
-  "manifest_version": 2,
-  "name": "Drumpfinator",
-  "version": "1.0",
-  "description": "An extension that replaces all instances of 'Trump' with 'Drumpf'",
-  "content_scripts":
-  [
-    {
-      "matches": ["*://*/*"],
-      "js": ["script.js"],
-      "run_at": "document_end"
-    }
-  ],
-  "permissions" : ["tabs", "*://*/*"],
-  "background" : {
-    "scripts" : ["background.js"],
-    "persistent" : false
-  },
-  "browser_action": {
-    "default_icon": "trump.png"
-  }
-}
-```
-
-(Note: order is not important.)
-
-Now, let's create our new `background.js` file; add the following code there:
-
-```javascript
-// Called when the user clicks on the browser action icon.
-chrome.browserAction.onClicked.addListener(function(tab) {
-  chrome.tabs.sendMessage(tab.id, {}, function(response) {
-    console.log("Your page has been trumpified!");
-  });
-});
-```
-
-We see the only thing we do is add a listener to the click of our icon.
-Once we receive this click, we send a message to our tab ID. Once we
-hear back from our tab, we can confidently print that the page has been
-trumpified.
-
-In `script.js`, our content script, we need to add the functionality to
-both change the images to images of Trump and the ability to actually
-receive the messages our background script is sending. Add this code to
-the bottom of your `script.js` file:
-
-```javascript
-// Replace all images with images of Donald Trump.
-TRUMP_PICS = [
-  'http://static6.businessinsider.com/image/55918b77ecad04a3465a0a63/nbc-fires-donald-trump-after-he-calls-mexicans-rapists-and-drug-runners.jpg',
-  'http://cdn1.thr.com/sites/default/files/2015/08/splash-trump-a1.jpg',
-  'http://www.modernman.com/wp-content/uploads/2015/12/Trump-Funny.jpg',
-  'http://www.speakgif.com/wp-content/uploads/bfi_thumb/donald-trump-funny-face-animated-gif-30twjrw7kil4ifiwtasge8.gif',
-  'http://static1.businessinsider.com/image/566ed6766da811ff178b4567/eagle-handler-explains-what-happened-when-his-bald-eagle-attacked-trump.jpg'
-]
-
-function trumpify() {
-  // Get all the images on a page.
-  var images = document.getElementsByTagName("img");
-
-  // Replace each image with a random one.
-  for (var i = 0; i < images.length; i++) {
-    var image = images[i];
-    image.src = TRUMP_PICS[Math.floor(Math.random() * TRUMP_PICS.length)];
-  }
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  trumpify();
-});
-```
-
-The code at the top is very similar to the code from our `cage-match`
-extension provided in the sample code and shown above. We create a list
-of links, each one of which is a picture of Donald Trump. Then, we
-create a function called `trumpify`, which takes each image on the
-current page, and makes it an image of Donald Trump from one of the five
-that we have provided.
-
-The interesting bit is the part at the bottom. Essentially, we add a
-listener to the Chrome runtime that listens for any messages that are
-sent to the tab. As soon as we get a message, we know it is being sent
-from our background page to tell us that our icon has been pressed, so
-at that point, we can change the images on our page.
-
-Reload your extension. Then, go to Google Images and search for
-something, like "pizza" or "puppies." Then, click our extension logo and
-watch all your pictures change!
-
-### Advanced JavaScript: DOM Mutations
-
-Our extension is looking pretty good, but there's one problem. Try doing
-a Google search for "Donald Trump," and look at the search results for
-the first page. You should see that all of our "Trump"s have been
-changed to "Drumpf"s. However, try clicking to the next page; you should
-still see "Trump."
-
-This is because of a problem in the way that content scripts work.
-Remember in our `manifest.json` file where we specified `run_at`:
-`document_end`? This basically says that as soon as our page is loaded
-for the first time, run our script, which does the text replacement.
-However, many pages load things dynamically, which update the current
-document without having to load a new page. Facebook does this so you
-don't have to reload the page to scroll down on your newsfeed, and
-Google does this with its search results. So, how can we change the text
-in this dynamically loaded content?
-
-We can do this with an advanced JavaScript technique called mutation
-observing. Essentially, we can create an observer that listens for
-certain events that occur within our DOM; this could be an event like
-the addition of a new link, the deletion of an image, or anything like
-that. In this case, we want to listen for the insertion of new elements;
-these new elements that are inserted may have "Trump"s in them, which we
-definitely need to change.
-
-To do this, add the following code to your `script.js`:
-
-```javascript
-// Create a MutationObserver to handle events
-// (e.g. filtering TextNode elements)
-var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes) {
-            [].slice.call(mutation.addedNodes).forEach(function(node) {
-              walk(node);
-            });
-        }
-    });
-});
-
-// Start observing "childList" events in document and its descendants
-observer.observe(document, {
-    childList: true,
-    subtree:   true
-});
-```
-
-First, we create a `MutationObserver` object. We go through each of our
-mutations, looking at any nodes that may have been added in that
-mutation. Then, we step through each of those added nodes, and call
-`walk` on them, the function that we use to do our text replacement.
-This way, we make sure to do text replacement on every new node that is
-added. Then, we call the observer to observe, passing in our entire
-document and instructing it to look at both the `childList` of our
-document as well as the subtree (essentially any sub-elements of the
-document). This way, whenever any new elements are added to our page, we
-can Drumpfify them without having to reload the page.
-
-Reload your extension and try the Google search results again. No matter
-how many pages you go through, you should see your Drumpf results.
-
-Our final code should look as follows:
-
-Filename: `manifest.json`
-
-```javascript
-{
-  "manifest_version": 2,
-  "name": "Drumpfinator",
-  "version": "1.0",
-  "description": "An extension that replaces all instances of 'Trump' with 'Drumpf'",
-  "content_scripts":
-  [
-    {
-      "matches": ["*://*/*"],
-      "js": ["script.js"],
-      "run_at": "document_end"
-    }
-  ],
-  "permissions" : ["tabs", "*://*/*"],
-  "background" : {
-    "scripts" : ["background.js"],
-    "persistent" : false
-  },
-  "browser_action": {
-    "default_icon": "trump.png"
-  }
-}
-```
-
-Filename: `script.js`
-
-```javascript
-var ELEMENT = 1;
-var DOCUMENT = 9;
-var DOCUMENT_FRAGMENT = 11;
-var TEXT = 3;
-
-// Enter things that you'd like to replace
-var MATCH = ['Trump'];
-var REPLACE = ['Drumpf'];
-
-walk(document.body);
-
-function walk(node) {
-    // Function from here for replacing text: http://is.gd/mwZp7E
-
-    var child, next;
-
-    switch (node.nodeType) {
-        case ELEMENT:  // Element
-        case DOCUMENT:  // Document
-        case DOCUMENT_FRAGMENT: // Document fragment
-            child = node.firstChild;
-            while (child) {
-                next = child.nextSibling;
-                walk(child);
-                child = next;
-            }
-            break;
-
-        case TEXT: // Text node
-            replaceText(node);
-            break;
-    }
-}
-
-function replaceText(textNode) {
-    var v = textNode.nodeValue;
-
-    // Go through and match/replace all the strings we've given it, using RegExp.
-    for (var i = 0; i < MATCH.length; i++) {
-        v = v.replace(new RegExp('\\b' + MATCH[i] + '\\b', 'g'), REPLACE[i]);
-    }
-
-    textNode.nodeValue = v;
-}
-
-// Create a MutationObserver to handle events
-// (e.g. filtering TextNode elements)
-var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes) {
-            [].slice.call(mutation.addedNodes).forEach(function(node) {
-              walk(node);
-            });
-        }
-    });
-});
-
-// Start observing "childList" events in document and its descendants
-observer.observe(document, {
-    childList: true,
-    subtree:   true
-});
-
-// Replace all images with images of Donald Trump.
-TRUMP_PICS = [
-  'http://static6.businessinsider.com/image/55918b77ecad04a3465a0a63/nbc-fires-donald-trump-after-he-calls-mexicans-rapists-and-drug-runners.jpg',
-  'http://cdn1.thr.com/sites/default/files/2015/08/splash-trump-a1.jpg',
-  'http://www.modernman.com/wp-content/uploads/2015/12/Trump-Funny.jpg',
-  'http://www.speakgif.com/wp-content/uploads/bfi_thumb/donald-trump-funny-face-animated-gif-30twjrw7kil4ifiwtasge8.gif',
-  'http://static1.businessinsider.com/image/566ed6766da811ff178b4567/eagle-handler-explains-what-happened-when-his-bald-eagle-attacked-trump.jpg'
-]
-
-function trumpify() {
-
-  // Get all the images on a page.
-  var images = document.getElementsByTagName("img");
-
-  // Replace each image with a random one.
-  for (var i = 0; i < images.length; i++) {
-    var image = images[i];
-    image.src = TRUMP_PICS[Math.floor(Math.random() * TRUMP_PICS.length)];
-  }
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  trumpify();
-  walk(document.body);
-});
-```
-
-Filename: `background.js`
-
-```javascript
-// Called when the user clicks on the browser action icon.
-chrome.browserAction.onClicked.addListener(function(tab) {
-  chrome.tabs.sendMessage(tab.id, {}, function(response) {
-    console.log("Your page has been trumpified!");
-  });
-});
-```
-
 ## Additional Resources
 
 If you want to learn more about how to build awesome Chrome extensions,
@@ -942,35 +517,23 @@ check out these resources:
 [Boiler Plate to Start][extensionizr]
 [jQuery and DOM Manipulation][jquery]
 [Inspiration][inspiration]
-[ADI Resources][learn]
+[ADI Resources](https://adicu.com/resources)
 
-[cloud-to-butt]: https://chrome.google.com/webstore/detail/cloud-to-butt-plus/apmlngnhgbnjpajelfkmabhkfapgnoai
 [ad-block]: https://chrome.google.com/webstore/detail/betafish-adblocker/gighmmpiobklfepjocnamgkkbiglidom
-[doge]: https://chrome.google.com/webstore/detail/libdoge/ifbchccfedjkkhlnffjckaghjdpchhmo
-[adi]: https://adicu.com
-[sample-code]: http://google.com
-[matt-pic]: https://twitter.com/matthew_pic
-[github-repo]: https://github.com/mjp2220/useless-chrome-extensions
-[chrome-developer]: https://developer.chrome.com/extensions
-[dom]: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
-[background]: https://developer.chrome.com/extensions/event_pages
-[permissions]: https://developer.chrome.com/extensions/activeTab
-[browser-action]: https://developer.chrome.com/extensions/browserAction
-[chrome-install]: https://www.google.com/chrome/browser/desktop/
-[samples]: https://developer.chrome.com/extensions/samples
-[extensionizr]: http://extensionizr.com/
-[jquery]: http://learn.adicu.com/jquery/
-[inspiration]: http://www.creativebloq.com/web-design/google-chrome-extensions-21410570
-[rick-roll]: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-[learn]: https://adicu.com/resources
-[code-link]: https://github.com/mjp2220/useless-chrome-extensions/archive/master.zip
-[browser-actions]: https://developer.chrome.com/extensions/browserAction
 [background-pages]: https://developer.chrome.com/extensions/background_pages
+[background]: https://developer.chrome.com/extensions/event_pages
+[browser-action]: https://developer.chrome.com/extensions/browserAction
+[browser-actions]: https://developer.chrome.com/extensions/browserAction
+[chrome-developer]: https://developer.chrome.com/extensions
+[chrome-install]: https://www.google.com/chrome/browser/desktop/
+[cloud-to-butt]: https://chrome.google.com/webstore/detail/cloud-to-butt-plus/apmlngnhgbnjpajelfkmabhkfapgnoai
+[code-link]: https://github.com/mjp2220/useless-chrome-extensions/archive/master.zip
+[doge]: https://chrome.google.com/webstore/detail/libdoge/ifbchccfedjkkhlnffjckaghjdpchhmo
+[dom]: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
+[extensionizr]: http://extensionizr.com/
+[inspiration]: http://www.creativebloq.com/web-design/google-chrome-extensions-21410570
+[jquery]: http://learn.adicu.com/jquery/
 [message-passing]: https://developer.chrome.com/extensions/messaging
-[john-oliver]: https://www.youtube.com/watch?v=DnpO_RTSNmQ
-[drumpfinator]: https://chrome.google.com/webstore/detail/drumpfinator/hcimhbfpiofdihhdnofbdlhjcmjopilp?hl=en
-[trump-wiki]: https://en.wikipedia.org/wiki/Donald_Trump
-[trump-image]: http://graphics8.nytimes.com/newsgraphics/2015/01/30/candidate-tracker/assets/images/trump-square-silo-150.png
-[event-pages]: https://developer.chrome.com/extensions/event_pages
-
-
+[permissions]: https://developer.chrome.com/extensions/activeTab
+[rick-roll]: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+[samples]: https://developer.chrome.com/extensions/samples
