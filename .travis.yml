@@ -23,7 +23,7 @@ install:
 
 script:
 - bundle exec htmlproofer --check-html --url-ignore /^https:\/\/github\.com\/adicu\/education\.adicu\.com\/tree\/master\/ _site/
-- bundle exec mdl --style .ci/markdown_style.rb .
+- bundle exec mdl --ignore-front-matter --warnings --style .ci/markdown_style.rb .
 
 before_deploy:
 - eval "$(ssh-agent -s)"
